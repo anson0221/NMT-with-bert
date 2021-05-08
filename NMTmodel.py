@@ -268,7 +268,7 @@ class sequence2sequence(nn.Module):
             """
             MAX_SEQ_LEN = 100
             answer = []
-            answer.append(self.target_Tknzr.vocab['CLS'])
+            answer.append(self.target_Tknzr.vocab['[CLS]'])
             input = self.word_vec_table.lookupTable[answer[0]].unsqueeze(0) # [CLS] : (1, bert_hidden_dim)
             while True:
                 dec_output, dec_output_hidden = self.decoder(
@@ -291,7 +291,7 @@ class sequence2sequence(nn.Module):
                 input = self.word_vec_table.lookupTable[prediction].unsqueeze(0) # (1, bert_hidden_dim)
         ###############################################################
         
-        
+
         batch_size = input_tensor.shape[0]
         bert_hidden_dim = target_tensor.shape[2]
         trg_len = target_tensor.shape[1] # the length of target sequence
