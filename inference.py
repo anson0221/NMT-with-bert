@@ -22,7 +22,8 @@ if __name__=='__main__':
                 hidden_size=768,
                 batch_size=1 # one sentence at a time
                 )
-    model.load_state_dict(torch.load(path, map_location=device))
+    check_point = torch.load(path, map_location=device)
+    model.load_state_dict(check_point['model_state_dict'])
     model.eval()
 
     cvtr = sentencesVec(bert=input_bert)
