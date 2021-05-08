@@ -10,7 +10,12 @@ def make_inference(model :s2s, converter :sentencesVec, input_sent :str)->str:
     sent = sent.unsqueeze(0) # (1, seq_len, hidden_dim)
     with torch.no_grad():
         out = model(input_tensor=sent)
-    return out
+    
+    ans = ''
+    for token in out:
+        ans += token
+
+    return ans
 
 if __name__=='__main__':
     path = os.path.join('./experiment/', sys.argv[1])
