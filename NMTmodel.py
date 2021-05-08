@@ -228,20 +228,18 @@ class sequence2sequence(nn.Module):
         self.init_hidden = self.encoder.init_hd0()
 
 
-    def forward(self, input_tensor, target_tensor, teacher_forcing_ratio=0.5):
+    def forward(self, input_tensor, target_tensor=None, teacher_forcing_ratio=0.5):
         """
         input_tensor : (batch_size, src_lenth, hidden_size)
-        target_tensor : (batch_size, src_lenth, hidden_size)
+        target_tensor : (batch_size, src_lenth, hidden_size) or None
 
         # return values
-            * output_answers : 
-                (batch_size, trg_len, self.tgt_vocab_size)
+            * Train
+                * output_answers : 
+                    (batch_size, trg_len, self.tgt_vocab_size)
+            * Inference
+                * answer : list[str]
         """
-
-
-        batch_size = input_tensor.shape[0]
-        bert_hidden_dim = target_tensor.shape[2]
-        trg_len = target_tensor.shape[1] # the length of target sequence
 
 
         """
@@ -250,6 +248,52 @@ class sequence2sequence(nn.Module):
         """
         enc_output, enc_output_hidden = self.encoder(input_tensor, self.init_hidden)
 
+        batch_size = input_tensor.shape[0]
+        bert_hidden_dim = target_tensor.shape[2]
+
+        ################ for inference #################################
+        if target_tensor is None:
+            """
+            # Inference
+                input_tensor : 
+                    (1, src_lenth, hidden_size)
+                pre_hidden : 
+                    (batch_size, decoder_hidden_dim)
+                encoder_output : 
+                    (batch_size, seq_len, 2 * enc_hidden_dim)
+
+                * Decoder
+                    dec_output : 
+                        * (batch_size, output_dim)
+                    dec_output_hidden : 
+                        * (batch_size, dec_hidden_dim)
+            """
+            MAX_SEQ_LEN = 100
+            answer = []
+            answer.append(self.target_Tknzr.vocab['CLS'])
+            input = self.word_vec_table.lookupTable[answer[0]].unsqueeze(0) # [CLS] : (1, bert_hidden_dim)
+            while True:
+                dec_output, dec_output_hidden = self.decoder(
+                                                                input_tensor=input,
+                                                                pre_hidden=enc_output_hidden,
+                                                                encoder_output=enc_output
+                                                            )
+                enc_output_hidden = dec_output_hidden
+
+                prediction = dec_output.argmax(1)
+                answer.append(prediction)
+
+                if prediction==self.target_Tknzr.vocab['[SEP]']:
+                    return self.target_Tknzr.convert_ids_to_tokens(answer)
+                if len(answer)>=MAX_SEQ_LEN:
+                    answer.append(self.target_Tknzr.vocab['[SEP]'])
+                    return self.target_Tknzr.convert_ids_to_tokens(answer)
+
+                # word embedding
+                input = self.word_vec_table.lookupTable[prediction].unsqueeze(0) # (1, bert_hidden_dim)
+        ###############################################################
+        
+        trg_len = target_tensor.shape[1] # the length of target sequence
         output_answers = torch.zeros(batch_size, trg_len, self.tgt_vocab_size).to(self.device)
 
         # [CLS] : (batch_size, bert_hidden_dim)
@@ -262,7 +306,7 @@ class sequence2sequence(nn.Module):
             
             # for Decoder
                 * Input parameters
-                    input : (batch_size, 1, 768), 
+                    input : (batch_size, decoder_hidden_dim)
                     pre_hidden : (batch_size, decoder_hidden_dim)
                     encoder_output : (batch_size, seq_len, 2 * enc_hidden_dim)
 

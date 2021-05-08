@@ -13,7 +13,7 @@ class wordVec_Table:
     Build a lookup table of bert-word-vector.
     This table could save a lot of time during training.
     """
-    def __init__(self, bert: str='bert-base-chinese', bert_dim :int=768, out_file :str='./table/wordVec_table.csv') -> None:
+    def __init__(self, bert: str='bert-base-chinese', bert_dim :int=768, out_file :str='./table/wordVec_table.csv'):
         self.vocab = BertTokenizer.from_pretrained(bert).vocab # list: tuple(token, index)
         self.vocab_size = len(self.vocab)
         self.file = out_file
@@ -28,7 +28,6 @@ class wordVec_Table:
             self._build_vocab_inVec_()
  
     def _build_vocab_inVec_(self):
-        print('Building a new word vectors table from BERT : ')
         for key in tqdm(self.vocab):
             idx = self.vocab[key]
             self.lookupTable[idx] = self.sent_cvtr.get_sentenceVec(key)[1] # (hidden_dim)
@@ -42,7 +41,6 @@ class wordVec_Table:
                 writer.writerow(row.numpy())
 
     def _load_csv_table_(self):
-        print('Loading the word vectors table which already exists : ')
         with open(self.file, mode='r', encoding='utf-8', newline='') as csv_file:
             reader = list(csv.reader(csv_file, delimiter=','))
             for i in tqdm(range(len(reader))):
@@ -94,23 +92,33 @@ class sentencesVec:
 
 
 class s2s_dataset(Dataset):
-    def __init__(self, root_dir, en_corpus, ch_corpus, en_bert='bert-base-uncased', ch_bert='bert-base-chinese'):
-        self.rootDir = root_dir # Directory with all data
+    def __init__(self, root_dir, en_corpus, ch_corpus, en_bert='bert-base-uncased', ch_bert='bert-base-chinese', dataNum :int=-1):
+        """
+        dataNum :
+            -1 means that we use all data in the dataset
+        """
+        self.rootDir = root_dir # Directory of all data
+        self.data_num = dataNum
 
         self.df_en = []
         with open(en_corpus, mode='r', encoding='utf-8') as en_f:
             lines = en_f.readlines()
-            for line in lines:
-                self.df_en.append(line)
+            if dataNum==-1:
+                self.data_num = len(lines)
+
+            for i in range(self.data_num):
+                self.df_en.append(lines[i])
         en_f.close()
 
         self.df_ch = []
         cvtr = OpenCC('s2twp')
         with open(ch_corpus, mode='r', encoding='utf-8') as ch_f:
             lines = ch_f.readlines()
-            for line in lines:
-                line = cvtr.convert(line)
-                self.df_ch.append(line)
+            if dataNum==-1:
+                self.data_num = len(lines)
+
+            for i in range(self.data_num):
+                self.df_ch.append(cvtr.convert(lines[i]))
         ch_f.close()
 
         self.enVec_generator = sentencesVec(en_bert)

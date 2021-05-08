@@ -43,10 +43,11 @@ def create_mini_batch(samples: list):
 
 def train(
             expr_name :str,
-            tableFile :str = './table/wordVec_table.csv',
+            tableFile :str='./table/wordVec_table.csv',
+            train_data_num :int=-1, # -1 means that we use all data for this training experiment
             optimizer__ :str='SGD',
             criterion=nn.NLLLoss(),
-            target_model = 'bert-base-chinese',
+            target_model='bert-base-chinese',
             rnn_layersNum=4,
             dropout_p=0.3,
             teacher_force_ratio=0.5, 
@@ -59,21 +60,22 @@ def train(
     # setting
     INPUT_SIZE = 768
     HIDDEN_SIZE = 768
+    BEST_LOSS = 999999
 
 
     # dataset
     root_path = os.path.dirname(os.path.abspath("./data/zh-en.en"))
     en_data_path = os.path.abspath("./data/zh-en.en")
     ch_data_path = os.path.abspath("./data/zh-en.zh")
-    en2ch_dataset = s2s_dataset(root_dir=root_path, en_corpus=en_data_path, ch_corpus=ch_data_path)
+    en2ch_dataset = s2s_dataset(root_dir=root_path, en_corpus=en_data_path, ch_corpus=ch_data_path, dataNum=train_data_num)
 
     """
     Dataloader : 
         use "collate_fn" for padding
     """
-    train_dataloader = DataLoader(en2ch_dataset, batch_size=batch_size, collate_fn=create_mini_batch, shuffle=True)
+    train_dataloader = DataLoader(en2ch_dataset, batch_size=batch_size, collate_fn=create_mini_batch, shuffle=True, drop_last=True)
 
-    # Model
+    # model
     model = sequence2sequence(
                                     input_size=INPUT_SIZE, 
                                     hidden_size=HIDDEN_SIZE,
@@ -95,6 +97,8 @@ def train(
 
     for epoch in range(epochs):
         epoch_loss = 0
+        for_count_len = 0
+        print()
         print('Epoch #'+str(epoch))
         for source, target, tgt_idxs in tqdm(train_dataloader):
             """
@@ -120,6 +124,7 @@ def train(
             source = source.to(device)
             target = target.to(device)
             tgt_idxs = tgt_idxs.to(device)
+
 
             # output : (batch_size, target_len, self.tgt_vocab_size)
             output = model(
@@ -149,27 +154,36 @@ def train(
 
             epoch_loss += loss.item()
 
-        epoch_loss /= len(train_dataloader)
+        epoch_loss /= (len(train_dataloader)-for_count_len)
         print('Loss : '+str(epoch_loss))
 
-    # save the model
-    torch.save(model.state_dict(), expr_name)
+        if epoch_loss<BEST_LOSS:
+            # save the model
+            BEST_LOSS = epoch_loss
+            torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': epoch_loss,
+            }, expr_name)
 
 
 if __name__=='__main__':
     device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     optimizer = 'SGD'
-    teacher_forcing_ratio = 0.5
+    teacher_forcing_ratio = 0.65
     batchSize = 16
     epochs_ = 20
     clipping = 1
-    learn_r = 0.004
+    learn_r = 0.007
+    train_dataNum = 10000
     table_file = './table/wordVec_table.csv'
-    experiment_name = './experiment/nmt_s2s.pt'
+    experiment_name = './experiment/nmt_s2s_bs{batch_size}.pt'
 
     train(
         expr_name=experiment_name,
         tableFile=table_file,
+        train_data_num=train_dataNum,
         optimizer__=optimizer,
         teacher_force_ratio=teacher_forcing_ratio,
         batch_size=batchSize,
