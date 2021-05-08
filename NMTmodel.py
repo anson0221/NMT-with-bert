@@ -248,8 +248,6 @@ class sequence2sequence(nn.Module):
         """
         enc_output, enc_output_hidden = self.encoder(input_tensor, self.init_hidden)
 
-        batch_size = input_tensor.shape[0]
-        bert_hidden_dim = target_tensor.shape[2]
 
         ################ for inference #################################
         if target_tensor is None:
@@ -293,6 +291,9 @@ class sequence2sequence(nn.Module):
                 input = self.word_vec_table.lookupTable[prediction].unsqueeze(0) # (1, bert_hidden_dim)
         ###############################################################
         
+        
+        batch_size = input_tensor.shape[0]
+        bert_hidden_dim = target_tensor.shape[2]
         trg_len = target_tensor.shape[1] # the length of target sequence
         output_answers = torch.zeros(batch_size, trg_len, self.tgt_vocab_size).to(self.device)
 

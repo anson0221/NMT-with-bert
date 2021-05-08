@@ -172,13 +172,13 @@ if __name__=='__main__':
     device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     optimizer = 'SGD'
     teacher_forcing_ratio = 0.65
-    batchSize = 16
+    batchSize = 8
     epochs_ = 20
     clipping = 1
     learn_r = 0.007
     train_dataNum = 10000
     table_file = './table/wordVec_table.csv'
-    experiment_name = './experiment/nmt_s2s_bs{batch_size}.pt'
+    experiment_name = './experiment/nmt_s2s_bs {batchSize} .pt'
 
     train(
         expr_name=experiment_name,
