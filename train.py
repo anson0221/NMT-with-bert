@@ -178,7 +178,7 @@ if __name__=='__main__':
     learn_r = 0.007
     train_dataNum = 10000
     table_file = './table/wordVec_table.csv'
-    experiment_name = './experiment/nmt_s2s_bs {batchSize} .pt'
+    experiment_name = f'./experiment/nmt_s2s_bs{batchSize}.pt'
 
     train(
         expr_name=experiment_name,
