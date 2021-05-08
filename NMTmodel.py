@@ -278,7 +278,7 @@ class sequence2sequence(nn.Module):
                                                             )
                 enc_output_hidden = dec_output_hidden
 
-                prediction = dec_output.argmax(1)
+                prediction = dec_output.argmax(1) # type(prediction) : list
                 answer.append(prediction)
 
                 if prediction==self.target_Tknzr.vocab['[SEP]']:
@@ -288,7 +288,7 @@ class sequence2sequence(nn.Module):
                     return self.target_Tknzr.convert_ids_to_tokens(answer)
 
                 # word embedding
-                input = self.word_vec_table.lookupTable[prediction].unsqueeze(0) # (1, bert_hidden_dim)
+                input = self.word_vec_table.lookupTable[prediction[0]].unsqueeze(0) # (1, bert_hidden_dim)
         ###############################################################
         
 
