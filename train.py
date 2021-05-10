@@ -8,6 +8,7 @@ from dataset import s2s_dataset
 from NMTmodel import sequence2sequence
 from tqdm import tqdm
 import os
+import sys
 
 def create_mini_batch(samples: list):
     """
@@ -76,6 +77,8 @@ def train(
     train_dataloader = DataLoader(en2ch_dataset, batch_size=batch_size, collate_fn=create_mini_batch, shuffle=True, drop_last=True)
 
     # model
+    path = os.path.join('./experiment/', sys.argv[1])
+    
     model = sequence2sequence(
                                     input_size=INPUT_SIZE, 
                                     hidden_size=HIDDEN_SIZE,
@@ -85,7 +88,9 @@ def train(
                                     target_language_model_name=target_model,
                                     wordVec_table_file=tableFile,
                                     device=device
-                                ).to(device)                                
+                                ).to(device)  
+    check_point = torch.load(path, map_location=device)
+    model.load_state_dict(check_point['model_state_dict'])                              
     model.train() # set the model to training mode
 
 
@@ -170,12 +175,12 @@ def train(
 
 if __name__=='__main__':
     device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    optimizer = 'SGD'
+    optimizer = 'Adam'
     teacher_forcing_ratio = 0.65
     batchSize = 8
     epochs_ = 20
     clipping = 1
-    learn_r = 0.007
+    learn_r = 0.004
     train_dataNum = 10000
     table_file = './table/wordVec_table.csv'
     experiment_name = f'./experiment/nmt_s2s_bs{batchSize}.pt'
