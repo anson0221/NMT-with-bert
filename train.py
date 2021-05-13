@@ -44,7 +44,6 @@ def create_mini_batch(samples: list):
 
 def train(
             from_ck_point :bool,
-            expr_name :str,
             tableFile :str='./table/wordVec_table.csv',
             train_data_num :int=-1, # -1 means that we use all data for this training experiment
             optimizer__ :str='SGD',
@@ -78,8 +77,6 @@ def train(
     train_dataloader = DataLoader(en2ch_dataset, batch_size=batch_size, collate_fn=create_mini_batch, shuffle=True, drop_last=True)
 
     # model
-    path = os.path.join('./experiment/', sys.argv[1])
-    
     model = sequence2sequence(
                                     input_size=INPUT_SIZE, 
                                     hidden_size=HIDDEN_SIZE,
@@ -90,6 +87,7 @@ def train(
                                     wordVec_table_file=tableFile,
                                     device=device
                                 ).to(device)
+    path = os.path.join('./experiment/', sys.argv[1])
     if from_ck_point:  
         check_point = torch.load(path, map_location=device)
         model.load_state_dict(check_point['model_state_dict'])                              
@@ -172,7 +170,7 @@ def train(
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'loss': epoch_loss,
-            }, expr_name)
+            }, path)
 
 
 if __name__=='__main__':
@@ -185,12 +183,10 @@ if __name__=='__main__':
     learn_r = 0.007 
     train_dataNum = 15000
     table_file = './table/wordVec_table.csv'
-    experiment_name = f'./experiment/nmt_s2s_bs{batchSize}.pt'
     from_checkpoint = True
 
     train(
         from_ck_point=from_checkpoint,
-        expr_name=experiment_name,
         tableFile=table_file,
         train_data_num=train_dataNum,
         optimizer__=optimizer,
