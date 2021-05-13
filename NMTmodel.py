@@ -60,6 +60,51 @@ class s2sencoder(nn.Module):
         return hidden_0
         
 
+# attention mechanism
+class Attention(nn.Module):
+    def __init__(self, enc_hd_dim, dec_hd_dim, enc_directionNum=2, enc_layerNum=4):
+        super(Attention, self).__init__()
+
+        self.FC = nn.Linear(enc_layerNum*dec_hd_dim, dec_hd_dim)
+
+        # 等價於右乘一個 matrix : ((encoder_hd_dim*enc_directionNum + decoder_hd_dim) x decoder_hd_dim)
+        self.attn = nn.Linear((enc_hd_dim*enc_directionNum)+dec_hd_dim, dec_hd_dim)
+
+        # bias = False
+        self.reduce_dim = nn.Linear(dec_hd_dim, 1, bias=False) 
+
+    def forward(self, encoder_output, pre_decoder_hidden):
+        """
+        encoder_output : (batch_size, seq_len, 2 * encoder_hidden_dim)
+        init_decoder_hidden : (enc_layerNum, batch_size, decoder_hidden_dim)
+        """
+        batch_size = pre_decoder_hidden.shape[1]
+
+        seq_len = encoder_output.shape[1]
+
+        pre_decoder_hidden = pre_decoder_hidden.permute(1, 0, 2)
+        # pre_dec_hd -> (batch_size, enc_layerNum, decoder_hidden_dim)
+        pre_decoder_hidden = pre_decoder_hidden.reshape(batch_size, 1, -1)
+        # pre_dec_hd -> (batch_size, 1, enc_layerNum*decoder_hidden_dim)
+
+        pre_decoder_hidden = torch.tanh(self.FC(pre_decoder_hidden))
+        # pre_dec_hd -> (batch_size, 1, decoder_hidden_dim)
+
+        pre_decoder_hidden = pre_decoder_hidden.repeat(1, seq_len, 1) 
+        # pre_dec_hd -> (batch_size, seq_len, decoder_hidden_dim)
+
+        # 直接串接
+        new_vec_for_attn = torch.cat((encoder_output, pre_decoder_hidden), dim=2) 
+        # new_vec_for_attn -> (batch_size, seq_len, (encoder_hd_dim*enc_directionNum + decoder_hd_dim))
+
+        attention = torch.tanh(self.attn(new_vec_for_attn)) 
+        # attention -> (batch_size, seq_len, decoder_hd_dim)
+
+        attention = F.softmax(self.reduce_dim(attention).squeeze(2), dim=1)
+        # attention -> (batch_size, seq_len)
+
+        return attention # attention weight
+
 
 class s2sdecoder(nn.Module):
     """
@@ -135,50 +180,6 @@ class s2sdecoder(nn.Module):
         output = self.log_softmax(output)
 
         return output, hidden
-
-
-# attention mechanism
-class Attention(nn.Module):
-    def __init__(self, enc_hd_dim, dec_hd_dim, enc_directionNum=2, enc_layerNum=4):
-        super(Attention, self).__init__()
-
-        self.FC = nn.Linear(enc_layerNum*dec_hd_dim, dec_hd_dim)
-
-        # 等價於右乘一個 matrix : ((encoder_hd_dim*enc_directionNum + decoder_hd_dim) x decoder_hd_dim)
-        self.attn = nn.Linear((enc_hd_dim*enc_directionNum)+dec_hd_dim, dec_hd_dim)
-
-        # bias = False
-        self.reduce_dim = nn.Linear(dec_hd_dim, 1, bias=False) 
-
-    # encoder_output : (batch_size, seq_len, 2 * encoder_hidden_dim)
-    # init_decoder_hidden : (enc_layerNum, batch_size, decoder_hidden_dim)
-    def forward(self, encoder_output, pre_decoder_hidden):
-        batch_size = pre_decoder_hidden.shape[1]
-
-        seq_len = encoder_output.shape[1]
-
-        pre_decoder_hidden = pre_decoder_hidden.permute(1, 0, 2)
-        # pre_dec_hd -> (batch_size, enc_layerNum, decoder_hidden_dim)
-        pre_decoder_hidden = pre_decoder_hidden.reshape(batch_size, 1, -1)
-        # pre_dec_hd -> (batch_size, 1, enc_layerNum*decoder_hidden_dim)
-
-        pre_decoder_hidden = torch.tanh(self.FC(pre_decoder_hidden))
-        # pre_dec_hd -> (batch_size, 1, decoder_hidden_dim)
-
-        pre_decoder_hidden = pre_decoder_hidden.repeat(1, seq_len, 1) 
-        # pre_dec_hd -> (batch_size, seq_len, decoder_hidden_dim)
-
-        new_vec_for_attn = torch.cat((encoder_output, pre_decoder_hidden), dim=2) 
-        # new_vec_for_attn -> (batch_size, seq_len, (encoder_hd_dim*enc_directionNum + decoder_hd_dim))
-
-        attention = torch.tanh(self.attn(new_vec_for_attn)) 
-        # attention -> (batch_size, seq_len, decoder_hd_dim)
-
-        attention = F.softmax(self.reduce_dim(attention).squeeze(2), dim=1)
-        # attention -> (batch_size, seq_len)
-
-        return attention # attention weight
-
 
 
 class sequence2sequence(nn.Module):
