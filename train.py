@@ -43,6 +43,7 @@ def create_mini_batch(samples: list):
     return input_batch, ground_truth, ground_truth_idxs
 
 def train(
+            from_ck_point :bool,
             expr_name :str,
             tableFile :str='./table/wordVec_table.csv',
             train_data_num :int=-1, # -1 means that we use all data for this training experiment
@@ -88,9 +89,10 @@ def train(
                                     target_language_model_name=target_model,
                                     wordVec_table_file=tableFile,
                                     device=device
-                                ).to(device)  
-    check_point = torch.load(path, map_location=device)
-    model.load_state_dict(check_point['model_state_dict'])                              
+                                ).to(device)
+    if from_ck_point:  
+        check_point = torch.load(path, map_location=device)
+        model.load_state_dict(check_point['model_state_dict'])                              
     model.train() # set the model to training mode
 
 
@@ -175,17 +177,19 @@ def train(
 
 if __name__=='__main__':
     device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    optimizer = 'Adam'
-    teacher_forcing_ratio = 0.65
+    optimizer = 'SGD'
+    teacher_forcing_ratio = 0.7
     batchSize = 8
-    epochs_ = 20
+    epochs_ = 30
     clipping = 1
-    learn_r = 0.004
-    train_dataNum = 10000
+    learn_r = 0.007 
+    train_dataNum = 15000
     table_file = './table/wordVec_table.csv'
     experiment_name = f'./experiment/nmt_s2s_bs{batchSize}.pt'
+    from_checkpoint = True
 
     train(
+        from_ck_point=from_checkpoint,
         expr_name=experiment_name,
         tableFile=table_file,
         train_data_num=train_dataNum,
