@@ -95,7 +95,7 @@ def train(
 
 
     if optimizer__=='SGD':
-        optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.8)
     elif optimizer__=='Adam':
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
