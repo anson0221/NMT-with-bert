@@ -65,10 +65,9 @@ def train(
 
 
     # dataset
-    root_path = os.path.dirname(os.path.abspath("./data/zh-en.en"))
     en_data_path = os.path.abspath("./data/zh-en.en")
     ch_data_path = os.path.abspath("./data/zh-en.zh")
-    en2ch_dataset = s2s_dataset(root_dir=root_path, en_corpus=en_data_path, ch_corpus=ch_data_path, dataNum=train_data_num)
+    en2ch_dataset = s2s_dataset(en_corpus=en_data_path, ch_corpus=ch_data_path, dataNum=train_data_num)
 
     """
     Dataloader : 
@@ -173,6 +172,12 @@ def train(
 
 
 if __name__=='__main__':
+    """
+    python3 train.py [model name] [train_dataNum]
+        * train_dataNum:
+            * -1 means all 
+            * the size of this dataset is about 240000
+    """
     device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     optimizer = 'SGD'
     teacher_forcing_ratio = 0.7
@@ -180,7 +185,7 @@ if __name__=='__main__':
     epochs_ = 30
     clipping = 1
     learn_r = 0.007 
-    train_dataNum = 15000
+    train_dataNum = int(sys.argv[2])
     table_file = './table/wordVec_table.csv'
     from_checkpoint = True
 
