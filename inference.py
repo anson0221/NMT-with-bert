@@ -12,8 +12,9 @@ def make_inference(model :s2s, converter :sentencesVec, input_sent :str)->str:
         out = model(input_tensor=sent)
     
     ans = ''
-    for token in out:
-        ans += token
+    for token in out[0]:
+        if token!='[CLS]' and token!='[SEP]':
+            ans += token
 
     return ans
 
