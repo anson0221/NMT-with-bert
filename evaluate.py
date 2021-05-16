@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
         score += sentence_bleu(
             references=[target_tknzr.encode(dataset.df_ch[i])],
-            hypothesis=prediction[0],
+            hypothesis=prediction,
             weights=(0.2, 0.2, 0.2, 0.2, 0.2)
         )
     score /= len(dataset)
