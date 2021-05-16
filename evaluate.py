@@ -9,10 +9,16 @@ import os
 
 
 if __name__ == '__main__':
+    """
+    python3 evaluate.py [model_path] [data_num]
+        * data_num
+            * -1 means all 
+            * the size of this dataset is about 240000
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    num = sys.argv[2]
-    dataset = s2s_dataset(en_corpus='./data/zh_en.en', ch_corpus='./data/zh_en.zh', dataNum=num)
+    data_num = sys.argv[2]
+    dataset = s2s_dataset(en_corpus='./data/zh_en.en', ch_corpus='./data/zh_en.zh', dataNum=data_num)
 
     input_bert = 'bert-base-uncased'
     source_cvtr = sentencesVec(bert=input_bert)
@@ -39,7 +45,7 @@ if __name__ == '__main__':
         score += sentence_bleu(
             references=[target_tknzr.encode(dataset.df_ch[i])],
             hypothesis=prediction,
-            weights=(0.2, 0.2, 0.2, 0.2, 0.2)
+            weights=(0.2, 0.2, 0.2, 0.2, 0.2) # BLEU-5
         )
     score /= len(dataset)
 
