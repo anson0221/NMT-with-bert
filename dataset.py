@@ -92,12 +92,11 @@ class sentencesVec:
 
 
 class s2s_dataset(Dataset):
-    def __init__(self, root_dir, en_corpus, ch_corpus, en_bert='bert-base-uncased', ch_bert='bert-base-chinese', dataNum :int=-1):
+    def __init__(self, en_corpus, ch_corpus, en_bert='bert-base-uncased', ch_bert='bert-base-chinese', dataNum :int=-1):
         """
         dataNum :
             -1 means that we use all data in the dataset
         """
-        self.rootDir = root_dir # Directory of all data
         self.data_num = dataNum
 
         self.df_en = []
