@@ -102,7 +102,6 @@ def train(
 
     for epoch in range(epochs):
         epoch_loss = 0
-        for_count_len = 0
         print()
         print('Epoch #'+str(epoch))
         for source, target, tgt_idxs in tqdm(train_dataloader):
@@ -159,7 +158,7 @@ def train(
 
             epoch_loss += loss.item()
 
-        epoch_loss /= (len(train_dataloader)-for_count_len)
+        epoch_loss /= (len(train_dataloader))
         print('Loss : '+str(epoch_loss))
 
         if epoch_loss<BEST_LOSS:
