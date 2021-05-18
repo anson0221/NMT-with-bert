@@ -90,9 +90,38 @@ class sentencesVec:
         return hd_states.squeeze(0) # (seq_len, hidden_dim)
 
 
+class s2s_shortCorpus(Dataset):
+    def __init__(self, file_path='./data/cmn.txt', src_bert='bert-base-uncased', tgt_bert='bert-base-chinese'):
+        self.en_df = []
+        self.ch_df = []
+
+        cvtr = OpenCC('s2twp')
+        with open(file_path, mode='r', encoding='utf-8', newline='') as f:
+            reader = list(csv.reader(f, delimiter='\t'))
+            for i in range(len(reader)):
+                print(reader[i][0])
+                print(cvtr.convert(reader[i][1]))
+                self.en_df.append(reader[i][0])
+                self.ch_df.append(cvtr.convert(reader[i][1]))
+        f.close()
+
+        self.src_vec_cvtr = sentencesVec(src_bert)
+        self.tgt_vec_cvtr = sentencesVec(tgt_bert)
+        self.tgt_tknzr = BertTokenizer.from_pretrained(tgt_bert)
+
+    def __getitem__(self, idx):
+        src = self.src_vec_cvtr.get_sentenceVec(self.en_df[idx])
+        tgt = self.tgt_vec_cvtr.get_sentenceVec(self.ch_df[idx])
+        tgt_idxs = torch.tensor(self.tgt_tknzr.encode(self.ch_df[idx]))
+
+        return src, tgt, tgt_idxs
+
+    def __len__(self):
+        return len(self.en_df)
+
 
 class s2s_dataset(Dataset):
-    def __init__(self, en_corpus, ch_corpus, en_bert='bert-base-uncased', ch_bert='bert-base-chinese', dataNum :int=-1):
+    def __init__(self, en_corpus='./data/zh-en.en', ch_corpus='./data/zh-en.zh', en_bert='bert-base-uncased', ch_bert='bert-base-chinese', dataNum :int=-1):
         """
         dataNum :
             -1 means that we use all data in the dataset
@@ -102,7 +131,7 @@ class s2s_dataset(Dataset):
         self.df_en = []
         with open(en_corpus, mode='r', encoding='utf-8') as en_f:
             lines = en_f.readlines()
-            if dataNum==-1:
+            if dataNum==-1 or dataNum>=len(lines):
                 self.data_num = len(lines)
 
             for i in range(self.data_num):
@@ -113,7 +142,7 @@ class s2s_dataset(Dataset):
         cvtr = OpenCC('s2twp')
         with open(ch_corpus, mode='r', encoding='utf-8') as ch_f:
             lines = ch_f.readlines()
-            if dataNum==-1:
+            if dataNum==-1 or dataNum>=len(lines):
                 self.data_num = len(lines)
 
             for i in range(self.data_num):
