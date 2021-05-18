@@ -91,14 +91,18 @@ class sentencesVec:
 
 
 class s2s_shortCorpus(Dataset):
-    def __init__(self, file_path='./data/cmn.txt', src_bert='bert-base-uncased', tgt_bert='bert-base-chinese'):
+    def __init__(self, file_path='./data/cmn.txt', src_bert='bert-base-uncased', tgt_bert='bert-base-chinese', dataNum :int=-1):
+        self.dataNum = dataNum
         self.en_df = []
         self.ch_df = []
 
         cvtr = OpenCC('s2twp')
         with open(file_path, mode='r', encoding='utf-8', newline='') as f:
             reader = list(csv.reader(f, delimiter='\t'))
-            for i in range(len(reader)):
+            if dataNum==-1 or dataNum>=len(reader):
+                self.data_num = len(reader)
+
+            for i in range(self.data_num):
                 print(reader[i][0])
                 print(cvtr.convert(reader[i][1]))
                 self.en_df.append(reader[i][0])
