@@ -4,7 +4,7 @@ from torch.nn.utils import clip_grad_norm_
 import torch
 import torch.nn as nn
 from torch import optim
-from dataset import s2s_dataset
+from dataset import s2s_dataset, s2s_shortCorpus
 from NMTmodel import sequence2sequence
 from tqdm import tqdm
 import os
@@ -45,6 +45,7 @@ def create_mini_batch(samples: list):
 def train(
             from_ck_point :bool,
             tableFile :str='./table/wordVec_table.csv',
+            dataset :str='small',
             train_data_num :int=-1, # -1 means that we use all data for this training experiment
             optimizer__ :str='SGD',
             criterion=nn.NLLLoss(),
@@ -57,7 +58,7 @@ def train(
             clip=1,
             learning_rate=0.04, 
             device='cpu'
-        ):
+):
     # setting
     INPUT_SIZE = 768
     HIDDEN_SIZE = 768
@@ -65,9 +66,17 @@ def train(
 
 
     # dataset
-    en_data_path = os.path.abspath("./data/zh-en.en")
-    ch_data_path = os.path.abspath("./data/zh-en.zh")
-    en2ch_dataset = s2s_dataset(en_corpus=en_data_path, ch_corpus=ch_data_path, dataNum=train_data_num)
+    if dataset=='small':
+        short_cp_path = os.path.abspath("./data/cmn.txt")
+        en2ch_dataset = s2s_shortCorpus(file_path=short_cp_path)
+    elif dataset=='big':
+        en_data_path = os.path.abspath("./data/zh-en.en")
+        ch_data_path = os.path.abspath("./data/zh-en.zh")
+        en2ch_dataset = s2s_dataset(en_corpus=en_data_path, ch_corpus=ch_data_path, dataNum=train_data_num)
+    else:
+        print('Invalid dataset!')
+        return
+
 
     """
     Dataloader : 
