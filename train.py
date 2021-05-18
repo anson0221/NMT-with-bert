@@ -44,6 +44,7 @@ def create_mini_batch(samples: list):
 
 def train(
             from_ck_point :bool,
+            model_path :str,
             tableFile :str='./table/wordVec_table.csv',
             dataset :str='small',
             train_data_num :int=-1, # -1 means that we use all data for this training experiment
@@ -95,7 +96,7 @@ def train(
                                     wordVec_table_file=tableFile,
                                     device=device
                                 ).to(device)
-    path = os.path.join('./experiment/', sys.argv[1])
+    path = os.path.join('./experiment/', model_path)
     if from_ck_point:  
         check_point = torch.load(path, map_location=device)
         model.load_state_dict(check_point['model_state_dict'])                              
@@ -182,10 +183,14 @@ def train(
 
 if __name__=='__main__':
     """
-    python3 train.py [model name] [train_dataNum]
+    python3 train.py [model name] [dataset] [train_dataNum]
+        * dataset:
+            * small
+            * big   
         * train_dataNum:
             * -1 means all 
-            * the size of this dataset is about 240000
+            * the size of this 'big' dataset is about 240000
+            * the size of this 'small' dataset is about 24360
     """
     device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     optimizer = 'SGD'
@@ -194,13 +199,17 @@ if __name__=='__main__':
     epochs_ = 30
     clipping = 1
     learn_r = 0.007 
-    train_dataNum = int(sys.argv[2])
+    modelPath = sys.argv[1]
     table_file = './table/wordVec_table.csv'
+    dataset_ = sys.argv[2]
+    train_dataNum = int(sys.argv[3])
     from_checkpoint = True
 
     train(
         from_ck_point=from_checkpoint,
+        model_path=modelPath,
         tableFile=table_file,
+        dataset=dataset_,
         train_data_num=train_dataNum,
         optimizer__=optimizer,
         teacher_force_ratio=teacher_forcing_ratio,
