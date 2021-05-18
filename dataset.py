@@ -103,8 +103,6 @@ class s2s_shortCorpus(Dataset):
                 self.data_num = len(reader)
 
             for i in range(self.data_num):
-                print(reader[i][0])
-                print(cvtr.convert(reader[i][1]))
                 self.en_df.append(reader[i][0])
                 self.ch_df.append(cvtr.convert(reader[i][1]))
         f.close()
