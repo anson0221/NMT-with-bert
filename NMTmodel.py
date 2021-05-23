@@ -76,7 +76,7 @@ class Attention(nn.Module):
     def forward(self, encoder_output, pre_decoder_hidden):
         """
         encoder_output : (batch_size, seq_len, 2 * encoder_hidden_dim)
-        init_decoder_hidden : (enc_layerNum, batch_size, decoder_hidden_dim)
+        pre_decoder_hidden : (enc_layerNum, batch_size, decoder_hidden_dim)
         """
         batch_size = pre_decoder_hidden.shape[1]
 
