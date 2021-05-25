@@ -99,16 +99,17 @@ def train(
     path = os.path.join('./experiment/', model_path)
     if from_ck_point:  
         check_point = torch.load(path, map_location=device)
-        model.load_state_dict(check_point['model_state_dict'])                              
-    model.train() # set the model to training mode
+        model.load_state_dict(check_point['model_state_dict'])
+        BEST_LOSS = check_point['loss'] 
 
-
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.92)
     if optimizer__=='SGD':
-        optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.8)
-    elif optimizer__=='Adam':
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        pass
+    elif optimizer__=='ck_point':
+            optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.92)
+            optimizer.load_state_dict(check_point['optimizer_state_dict'])
 
-
+    model.train() # set the model to training mode
     for epoch in range(epochs):
         epoch_loss = 0
         print()
@@ -193,7 +194,7 @@ if __name__=='__main__':
             * the size of this 'small' dataset is about 24360
     """
     device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    optimizer = 'SGD'
+    optimizer = 'ck_point'
     teacher_forcing_ratio = 0.7
     batchSize = 8
     epochs_ = 30
