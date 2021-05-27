@@ -48,7 +48,6 @@ def train(
             tableFile :str='./table/wordVec_table.csv',
             dataset :str='small',
             train_data_num :int=-1, # -1 means that we use all data for this training experiment
-            optimizer__ :str='SGD',
             criterion=nn.NLLLoss(),
             target_model='bert-base-chinese',
             rnn_layersNum=4,
@@ -103,13 +102,8 @@ def train(
         BEST_LOSS = check_point['loss'] 
 
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.92)
-    if optimizer__=='SGD':
-        pass
-    elif optimizer__=='ck_point':
-            optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.92)
-            optimizer.load_state_dict(check_point['optimizer_state_dict'])
-
     model.train() # set the model to training mode
+
     for epoch in range(epochs):
         epoch_loss = 0
         print()
@@ -194,7 +188,6 @@ if __name__=='__main__':
             * the size of this 'small' dataset is about 24360
     """
     device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    optimizer = 'ck_point'
     teacher_forcing_ratio = 0.7
     batchSize = 8
     epochs_ = 30
@@ -212,7 +205,6 @@ if __name__=='__main__':
         tableFile=table_file,
         dataset=dataset_,
         train_data_num=train_dataNum,
-        optimizer__=optimizer,
         teacher_force_ratio=teacher_forcing_ratio,
         batch_size=batchSize,
         epochs=epochs_,
